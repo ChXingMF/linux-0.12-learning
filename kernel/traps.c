@@ -19,11 +19,22 @@
 #include <asm/segment.h>
 #include <asm/io.h>
 
+/*
+* func: 取seg段地址+addr偏移值后一个字节的值
+* seg: 段地址
+* addr： 偏移长度
+* register char __res :定义一个寄存器变量__res
+* push %%fs :fs段寄存器的值先入栈以保存原fs值
+* mov %%ax,%%fs :将eax寄存器的值(此时eax寄存器的值是seg值)赋给fs寄存器
+* movb %%fs:%2,%%al :取fs:(*(addr))(即seg:addr)处一字节的值放入al寄存器中; movb:操作一字节
+* pop %%fs :出栈，恢复fs寄存器值
+* "=a" (__res)
+* "0" (seg),"m" (*(addr)
+*/
 #define get_seg_byte(seg,addr) ({ \
-register char __res; \                  // 定义一个寄存器变量__res
-__asm__("push %%fs;mov %%ax,%%fs;movb %%fs:%2,%%al;pop %%fs" \          // 汇编语句
-	:"=a" (__res)\                                                   // 输出寄存器列表                                                                                 
-	:"0" (seg),"m" (*(addr))); \                                    // 输入寄存器列表
+register char __res; \
+__asm__("push %%fs;mov %%ax,%%fs;movb %%fs:%2,%%al;pop %%fs" \
+	:"=a" (__res):"0" (seg),"m" (*(addr))); \
 __res;})
 
 #define get_seg_long(seg,addr) ({ \
