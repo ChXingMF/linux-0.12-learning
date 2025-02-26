@@ -117,24 +117,24 @@ return __res;
 */
 extern inline int strncmp(const char * cs,const char * ct,int count)
 {
-register int __res __asm__("ax");
-__asm__("cld\n"
-	"1:\tdecl %3\n\t"
-	"js 2f\n\t"
-	"lodsb\n\t"
-	"scasb\n\t"
-	"jne 3f\n\t"
-	"testb %%al,%%al\n\t"
-	"jne 1b\n"
-	"2:\txorl %%eax,%%eax\n\t"
-	"jmp 4f\n"
-	"3:\tmovl $1,%%eax\n\t"
-	"jl 4f\n\t"
-	"negl %%eax\n"
+register int __res __asm__("ax");	// 寄存器变量__res
+__asm__("cld\n"						// 清理方向位
+	"1:\tdecl %3\n\t"				// count--
+	"js 2f\n\t"						// 如果count < 0,则跳转到标号2
+	"lodsb\n\t"						// 取串2的字符ds:[esi]->al,并且esi++
+	"scasb\n\t"						// 比较al与字符串es:[edi],并且edi++
+	"jne 3f\n\t"					// 如果不想等，则跳转到标号3
+	"testb %%al,%%al\n\t"			// 判断该字符是否为NULL？
+	"jne 1b\n"						// 不是NULL，则向后跳转到标号1，继续比较
+	"2:\txorl %%eax,%%eax\n\t"		// 是NULL，则eax清零（返回值）
+	"jmp 4f\n"						// 向前跳转到标号4，结束
+	"3:\tmovl $1,%%eax\n\t"			// eax中置1
+	"jl 4f\n\t"						// 如果前面比较中字符串2<字符串1，则返回1，结束
+	"negl %%eax\n"					// 否则eax = -eax，返回负值，结束
 	"4:"
 	:"=a" (__res):"D" (cs),"S" (ct),"c" (count)
 	:"si","di","cx");
-return __res;
+return __res;						// 返回比较结果
 }
 
 extern inline char * strchr(const char * s,char c)
