@@ -30,6 +30,7 @@
 * pop %%fs :出栈，恢复fs寄存器值
 * "=a" (__res)
 * "0" (seg),"m" (*(addr)
+* PS: page56 若返回值是一个整数或者一个指针，那么寄存器eax将被默认用来传递返回值
 */
 #define get_seg_byte(seg,addr) ({ \
 register char __res; \

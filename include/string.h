@@ -24,21 +24,26 @@ extern char * strerror(int errno);
  *		(C) 1991 Linus Torvalds
  */
 
+ /*
+ *	关键字inline和extern组合一起的作用几乎类同宏定义
+ *  关键字inline和extern组合定义的函数放在.h头文件中，并且把包含关键字的另一个相同的函数定义放在一个库文件中。
+ *	此时头文件中的定义会让绝大数对该函数的调用被替换嵌入
+ */
 
 /*
-*   功能：将源字符串src复制到另一字符串dest，知道遇到null字符停止
+*   功能：将源字符串src复制到另一字符串dest，直到遇到null字符停止
 *   参数：dest-目的字符串指针，src-源字符串指针
 *            %0 - esi(src), %1 - edi(dest)
 */
 extern inline char * strcpy(char * dest,const char *src)
 {
-__asm__("cld\n"
-	"1:\tlodsb\n\t"
-	"stosb\n\t"
-	"testb %%al,%%al\n\t"
-	"jne 1b"
+__asm__("cld\n"								// 清方向位
+	"1:\tlodsb\n\t"							// 加载DS:[esi]处1字节->al,并更新esi
+	"stosb\n\t"								// 存储字节al->ES[edi],并更新edi
+	"testb %%al,%%al\n\t"					// 刚刚储存的字节是否为0？
+	"jne 1b"								// 不是，则向后跳转到标号1处，否则结束
 	::"S" (src),"D" (dest):"si","di","ax");
-return dest;
+return dest;								// // 返回目的字符串
 }
 
 extern inline char * strncpy(char * dest,const char *src,int count)
@@ -114,6 +119,7 @@ return __res;
 *   功能：字符串cs与字符串ct前count个字符进行比较
 *   参数：count-比较的字符数
 *   返回：如果cs>ct,则返回1；cs==ct，则返回0；cs<ct,返回-1
+*   %0 寄存器eax（返回值__res）， %1 寄存器edi(字符串cs)， %2 寄存器esi(字符串ct)， %3 寄存器ecx(参数count)
 */
 extern inline int strncmp(const char * cs,const char * ct,int count)
 {
@@ -132,7 +138,7 @@ __asm__("cld\n"						// 清理方向位
 	"jl 4f\n\t"						// 如果前面比较中字符串2<字符串1，则返回1，结束
 	"negl %%eax\n"					// 否则eax = -eax，返回负值，结束
 	"4:"
-	:"=a" (__res):"D" (cs),"S" (ct),"c" (count)
+	:"=a" (__res):"D" (cs),"S" (ct),"c" (count)		// 输出寄存器列表 a->寄存器eax D->edi S->esi c->ecx
 	:"si","di","cx");
 return __res;						// 返回比较结果
 }
